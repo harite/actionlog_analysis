@@ -3,17 +3,17 @@ import sys, getopt, string, signal
 import os, re
 import numpy as np
 import pandas as pd
-from pandas import Series, DataFrame, Panel
+import seaborn as sns
 import matplotlib.pyplot as plt
 
-#
+#########################################
+# Handle command line arguments
 #
 def signal_handler(signal, frame):
         print('You pressed Ctrl+C!')
         sys.exit(0)
 signal.signal(signal.SIGINT, signal_handler)
 
-#
 #
 def help_message():
     print ('''Usage: usercount [OPTION] filename
@@ -23,21 +23,21 @@ Options:
        -v      -- displays Python version''')
     sys.exit(0)
 #
-#
 def split_line(text):
     timestamp, params = text.strip().split( ' - ')
-    indexes = (1,3,5,7,)
+    #indexes = (1,3,5,7,)
     values = params.split(' ')
     #for i in indexes:
     #    print(values[i])
-    usertype = values[1]
-    action = values[3]
-    schoolid = values[5]
-    userid = values[7]
-    logdate = timestamp[1:11]
+    action_vars={'usertype': values[1],
+                'action': values[3],
+                'schoolid': values[5],
+                'userid': values[7],
+                'logdate': timestamp[1:11]
+                }
 
-    return userid, action, logdate
-#
+    return action_vars
+
 #
 try:
     options, args = getopt.getopt(sys.argv[1:],'hs:v', ['version'])
@@ -73,13 +73,25 @@ for filename in args[:]:
         sys.exit(0)
 
 
+###############################################
+#
+
+limit_schoolid = ""
+schoolid = -1
+#userid = -1
+#action = ""
+#usertype = ""
+
+
 ########################################################
 #
 #
 #
 
-dates = pd.date_range('2015-09-16', '2015-12-14', freq='W')
-hit_series = pd.Series(0, dates)
+dates = pd.date_range('2015-09-01', '2016-02-01', freq='D')
+student_hit_series = pd.Series(0, dates)
+teacher_hit_series = pd.Series(0, dates)
+guardian_hit_series = pd.Series(0, dates)
 
 for line in log_lines:
 
@@ -88,20 +100,41 @@ for line in log_lines:
     if limit_schoolid!='' and re.search('SCHOOL: ' + limit_schoolid+' ', line) == None:
         continue
 
-    userid, action, logdate = split_line(line)
+    action_vars = split_line(line)
 
-    #date=pd.to_datetime('2015-10-28')
-    hit_series.loc[logdate] += 1
+    logdate=action_vars['logdate']
 
-'''
-            if re.search('USER: student',line) != None:
+    if action_vars['usertype'] == 'student':
+        student_hit_series[logdate] += 1
 
-            elif re.search('USER: teacher',line) != None:
+    elif action_vars['usertype'] == 'teacher':
+        teacher_hit_series[logdate] += 1
 
-            elif re.search('USER: guardian',line) != None:
-'''
+    elif action_vars['usertype'] == 'guardian':
+        guardian_hit_series[logdate] += 1
+
+weekly_hits_frame = pd.DataFrame({'teacher':teacher_hit_series.resample('W',how=sum),
+        'student':student_hit_series.resample('W',how=sum),
+        'guardian':guardian_hit_series.resample('W',how=sum)})
+#print(hit_frame)
+#plt.bar(weekly_hits_frame.index,weekly_hits_frame['student'])
 
 
-#hit_series.plot()
+f, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(8, 6), sharex=True)
+
+sns.barplot(weekly_hits_frame.index,weekly_hits_frame['teacher'],ax=ax1)
+ax1.set_ylabel("Teachers")
+
+sns.barplot(weekly_hits_frame.index,weekly_hits_frame['student'],ax=ax2)
+ax2.set_ylabel("Students")
+
+sns.barplot(weekly_hits_frame.index,weekly_hits_frame['guardian'],ax=ax3)
+ax3.set_ylabel("Parents")
+
+sns.despine(bottom=True)
+plt.setp(f.axes, yticks=[], xticks=[])
+plt.tight_layout(h_pad=3)
+plt.show()
+
 
 
