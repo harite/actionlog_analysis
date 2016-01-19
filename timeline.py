@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from datetime import datetime
 
 #########################################
 # Handle command line arguments
@@ -38,7 +39,16 @@ def split_line(text):
 
     return action_vars
 
+###############################################
 #
+#
+
+limit_schoolid = ""
+schoolid = -1
+#userid = -1
+#action = ""
+#usertype = ""
+
 try:
     options, args = getopt.getopt(sys.argv[1:],'hs:v', ['version'])
 except getopt.error:
@@ -73,25 +83,25 @@ for filename in args[:]:
         sys.exit(0)
 
 
-###############################################
-#
-
-limit_schoolid = ""
-schoolid = -1
-#userid = -1
-#action = ""
-#usertype = ""
-
-
 ########################################################
 #
 #
 #
 
 dates = pd.date_range('2015-09-01', '2016-02-01', freq='D')
+weeks = pd.date_range('2015-09-01', '2016-02-07', freq='W')
 student_hit_series = pd.Series(0, dates)
 teacher_hit_series = pd.Series(0, dates)
 guardian_hit_series = pd.Series(0, dates)
+student_active_series = pd.Series(0, dates)
+teacher_active_series = pd.Series(0, dates)
+guardian_active_series = pd.Series(0, dates)
+
+
+#
+student_daily_active = {datetime.strftime(i,"%Y-%m-%d"):[] for i in dates}
+teacher_daily_active = {datetime.strftime(i,"%Y-%m-%d"):[] for i in dates}
+guardian_daily_active = {datetime.strftime(i,"%Y-%m-%d"):[] for i in dates}
 
 for line in log_lines:
 
@@ -106,21 +116,34 @@ for line in log_lines:
 
     if action_vars['usertype'] == 'student':
         student_hit_series[logdate] += 1
+        if not(action_vars['userid'] in student_daily_active[logdate]):
+            student_daily_active[logdate].append(action_vars['userid'])
+            student_active_series[logdate] +=1
 
     elif action_vars['usertype'] == 'teacher':
         teacher_hit_series[logdate] += 1
+        if not(action_vars['userid'] in teacher_daily_active[logdate]):
+            teacher_daily_active[logdate].append(action_vars['userid'])
+            teacher_active_series[logdate] +=1
 
     elif action_vars['usertype'] == 'guardian':
         guardian_hit_series[logdate] += 1
+        if not(action_vars['userid'] in guardian_daily_active[logdate]):
+            guardian_daily_active[logdate].append(action_vars['userid'])
+            guardian_active_series[logdate] +=1
+
 
 weekly_hits_frame = pd.DataFrame({'teacher':teacher_hit_series.resample('W',how=sum),
         'student':student_hit_series.resample('W',how=sum),
         'guardian':guardian_hit_series.resample('W',how=sum)})
-#print(hit_frame)
-#plt.bar(weekly_hits_frame.index,weekly_hits_frame['student'])
 
+weekly_active_frame = pd.DataFrame({'teacher':teacher_active_series.resample('W',how='mean'),
+        'student':student_active_series.resample('W',how='mean'),
+        'guardian':guardian_active_series.resample('W',how='mean')})
 
 f, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(8, 6), sharex=True)
+
+#sns.set(style="darkgrid")
 
 sns.barplot(weekly_hits_frame.index,weekly_hits_frame['teacher'],ax=ax1)
 ax1.set_ylabel("Teachers")
@@ -136,5 +159,4 @@ plt.setp(f.axes, yticks=[], xticks=[])
 plt.tight_layout(h_pad=3)
 plt.show()
 
-
-
+#print(weekly_hits_frame.resample('M',how=sum))

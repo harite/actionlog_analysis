@@ -2,22 +2,6 @@
 import sys, getopt, string, signal
 import os, re
 
-
-hit_counts = {'student': 0, 'teacher':0, 'guardian':0}
-students = {}
-teachers = {}
-guardians = {}
-teacher_homeworks = {}
-teacher_resources = {}
-teacher_topiclines = {}
-teacher_reviews = {}
-
-limit_schoolid = ""
-schoolid = -1
-userid = -1
-action = ""
-usertype = ""
-
 #
 #
 def signal_handler(signal, frame):
@@ -50,8 +34,23 @@ def split_line(text):
     
     return userid, action
 
+###############################################
 #
-#
+hit_counts = {'student': 0, 'teacher':0, 'guardian':0}
+students = {}
+teachers = {}
+guardians = {}
+teacher_homeworks = {}
+teacher_resources = {}
+teacher_topiclines = {}
+teacher_reviews = {}
+
+limit_schoolid = ""
+schoolid = -1
+userid = -1
+action = ""
+usertype = ""
+
 try:
     options, args = getopt.getopt(sys.argv[1:],'hs:v', ['version'])
 except getopt.error:
@@ -75,7 +74,8 @@ for o in options[:]:
         sys.exit(0)
 
 
-#
+
+###############################################
 #
 for filename in args[:]:
     try:
