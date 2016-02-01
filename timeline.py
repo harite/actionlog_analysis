@@ -118,19 +118,19 @@ for line in log_lines:
         student_hit_series[logdate] += 1
         if not(action_vars['userid'] in student_daily_active[logdate]):
             student_daily_active[logdate].append(action_vars['userid'])
-            student_active_series[logdate] +=1
+            student_active_series[logdate] += 1
 
     elif action_vars['usertype'] == 'teacher':
         teacher_hit_series[logdate] += 1
         if not(action_vars['userid'] in teacher_daily_active[logdate]):
             teacher_daily_active[logdate].append(action_vars['userid'])
-            teacher_active_series[logdate] +=1
+            teacher_active_series[logdate] += 1
 
     elif action_vars['usertype'] == 'guardian':
         guardian_hit_series[logdate] += 1
         if not(action_vars['userid'] in guardian_daily_active[logdate]):
             guardian_daily_active[logdate].append(action_vars['userid'])
-            guardian_active_series[logdate] +=1
+            guardian_active_series[logdate] += 1
 
 
 weekly_hits_frame = pd.DataFrame({'teacher':teacher_hit_series.resample('W',how=sum),
@@ -141,22 +141,29 @@ weekly_active_frame = pd.DataFrame({'teacher':teacher_active_series.resample('W'
         'student':student_active_series.resample('W',how='mean'),
         'guardian':guardian_active_series.resample('W',how='mean')})
 
-f, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(8, 6), sharex=True)
+f, ax_array = plt.subplots(3, 2, figsize=(8, 6), sharex=True)
 
-#sns.set(style="darkgrid")
+#sns.despine(bottom=True)
+#sns.set_style("whitegrid")
 
-sns.barplot(weekly_hits_frame.index,weekly_hits_frame['teacher'],ax=ax1)
-ax1.set_ylabel("Teachers")
+sns.barplot(weekly_active_frame.index,weekly_active_frame['teacher'],ax=ax_array[0,0])
+ax_array[0,0].set_ylabel("Teachers")
+ax_array[0,1].plot(weekly_hits_frame['teacher']/weekly_active_frame['teacher'])
+ax_array[0,1].set_ylabel("Hits")
 
-sns.barplot(weekly_hits_frame.index,weekly_hits_frame['student'],ax=ax2)
-ax2.set_ylabel("Students")
+sns.barplot(weekly_active_frame.index,weekly_active_frame['student'],ax=ax_array[1,0])
+ax_array[1,0].set_ylabel("Students")
+ax_array[1,1].plot(weekly_hits_frame['student']/weekly_active_frame['student'])
+ax_array[1,1].set_ylabel("Hits")
 
-sns.barplot(weekly_hits_frame.index,weekly_hits_frame['guardian'],ax=ax3)
-ax3.set_ylabel("Parents")
+sns.barplot(weekly_active_frame.index,weekly_active_frame['guardian'],ax=ax_array[2,0])
+ax_array[2,0].set_ylabel("Parents")
+ax_array[2,1].plot(weekly_hits_frame['guardian']/weekly_active_frame['guardian'])
+ax_array[2,1].set_ylabel("Hits")
 
-sns.despine(bottom=True)
-plt.setp(f.axes, yticks=[], xticks=[])
+plt.setp(f.axes, xticks=[])
 plt.tight_layout(h_pad=3)
 plt.show()
+
 
 #print(weekly_hits_frame.resample('M',how=sum))
