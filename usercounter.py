@@ -31,7 +31,7 @@ def split_line(text):
     action = values[3]
     schoolid = values[5]
     userid = values[7]
-    
+
     return userid, action
 
 ###############################################
@@ -82,13 +82,13 @@ for filename in args[:]:
         logfile = open(filename, 'r')
         print ("Reading... ", filename)
         for line in logfile:
-            
+
             if re.search('SCHOOL: 101 ',line) != None or re.search('SCHOOL: 1 ',line) != None:
                 continue
             if limit_schoolid!='' and re.search('SCHOOL: ' + limit_schoolid+' ', line) == None:
                 continue
 
-            
+
             if re.search('USER: student',line) != None:
                 userid, action = split_line(line)
                 #print(userid,"did this",action)
@@ -97,7 +97,7 @@ for filename in args[:]:
                     students[userid] += 1
                 else:
                     students[userid] = 1
-                    
+
             elif re.search('USER: teacher',line) != None:
                 userid, action = split_line(line)
                 #print(userid,"did this",action)
@@ -127,9 +127,7 @@ for filename in args[:]:
                         teacher_topiclines[userid] += 1
                     else:
                         teacher_topiclines[userid] = 1
-                    
 
-                
             elif re.search('USER: guardian',line) != None:
                 userid, action = split_line(line)
                 #print(userid,"did this",action)
@@ -138,7 +136,7 @@ for filename in args[:]:
                     guardians[userid] += 1
                 else:
                     guardians[userid] = 1
-                        
+
         logfile.close()
     except IOError as e:
         print("Can't open file:", filename)
@@ -165,6 +163,6 @@ for userid in teacher_homeworks.keys():
     if userid in teacher_topiclines and teacher_topiclines[userid]>4 and teacher_homeworks[userid]>10:
         super_teachers += 1
         print(userid)
-        
+
 print("")
 print("Super Teachers! Doing both homework and topiclines ", super_teachers)
